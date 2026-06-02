@@ -250,7 +250,9 @@ class _LoginPageState extends State<LoginPage> {
                             style: TextStyle(color: Colors.black54, fontSize: 14),
                           ),
                           GestureDetector(
-                            onTap: () => Navigator.pushNamed(context, '/register'),
+                            onTap: () {
+                              Navigator.pushNamed(context, '/register');
+                            },
                             child: const Text(
                               'Register User?',
                               style: TextStyle(color: tealColor, fontWeight: FontWeight.bold, fontSize: 14),

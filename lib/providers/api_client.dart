@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   // Gunakan 10.0.2.2 untuk Emulator Android bawaan, ganti ke 127.0.0.1 jika via Web/Chrome
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   static Dio get dio {
     final dio = Dio(BaseOptions(

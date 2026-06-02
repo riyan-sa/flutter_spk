@@ -11,19 +11,89 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
-  final List<Widget> _pages = [const DashboardPage(), const FormPenilaianPage()];
+
+  // Daftar halaman yang di-render sesuai susunan item di Figma
+  final List<Widget> _pages = [
+    const DashboardPage(),
+    const FormPenilaianPage(),
+    const Center(child: Text('Halaman Simpan', style: TextStyle(color: Colors.grey))),
+    const Center(child: Text('Halaman Profil', style: TextStyle(color: Colors.grey))),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF0D5C4D); // Warna aktif sesuai image_9c469f.png
+    const inactiveColor = Color(0xFF334155); // Warna tidak aktif sesuai image_9c469f.png
+
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _pages),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Rekomendasi'),
-        ],
+      // IndexedStack menjaga agar state halaman tidak ter-reset saat berpindah tab
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: Color(0xFFE2E8F0), // Garis pembatas tipis di atas navbar sesuai figma
+              width: 1.5,
+            ),
+          ),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: primaryColor,
+          unselectedItemColor: inactiveColor,
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold, 
+            fontSize: 12,
+            height: 1.5,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w500, // Menggunakan w500 (Medium) yang valid di SDK Flutter
+            fontSize: 12,
+            height: 1.5,
+          ),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.home_filled), // Ikon Rumah Tebal untuk Home
+              ),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.auto_awesome_rounded), // Ikon Sparkles untuk Rekomendasi
+              ),
+              label: 'Rekomendasi',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.bookmark_border_rounded), // Ikon Pita Pembatas untuk Simpan
+              ),
+              label: 'Simpan',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.person_outline_rounded), // Ikon Outline User untuk Profil
+              ),
+              label: 'Profil',
+            ),
+          ],
+        ),
       ),
     );
   }
