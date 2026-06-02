@@ -10,35 +10,45 @@ class FormPenilaianPage extends StatefulWidget {
 }
 
 class _FormPenilaianPageState extends State<FormPenilaianPage> {
-  int _valC2 = 3;
-  int _valC3 = 3;
+  final Map<int, int> _selectedAnswers = {1: 3, 2: 3, 3: 3, 4: 3};
+  bool _isSending = false;
+
+  void _submitForm() async {
+    setState(() => _isSending = true);
+
+    final formattedAnswers = _selectedAnswers.entries.map((entry) {
+      return {'question_id': entry.key, 'answer_value': entry.value};
+    }).toList();
+
+    bool success = await Provider.of<SpkProvider>(context, listen: false).submitPenilaian(formattedAnswers);
+    
+    setState(() => _isSending = false);
+
+    if (success && mounted) {
+      Navigator.pushNamed(context, '/hasil-rekomendasi');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF0D5C4D);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(backgroundColor: Colors.white, title: const Text('Student Recommendation', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('SECTION C2 : MINAT MAHASISWA', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor, fontSize: 12)),
-            const SizedBox(height: 8),
-            _buildSelectionCard('Seberapa besar minat Anda pada penelitian akademis?', _valC2, (v) => setState(() => _valC2 = v), primaryColor),
+            const Text('Input Parameter Bobot Kriteria', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            _buildSliderCard('C1. Nilai Kelompok MK Relevan', 1),
+            _buildSliderCard('C2. Tingkat Minat Pribadi', 2),
+            _buildSliderCard('C3. Ketersediaan Portofolio Proyek', 3),
+            _buildSliderCard('C4. Penguasaan Tools / Framework', 4),
             const SizedBox(height: 24),
-            const Text('SECTION C3 : PENGALAMAN', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor, fontSize: 12)),
-            const SizedBox(height: 8),
-            _buildSelectionCard('Seberapa besar pengalaman implementasi proyek Anda?', _valC3, (v) => setState(() => _valC3 = v), primaryColor),
-            const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/hasil-rekomendasi');
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: const Text('Hitung Rekomendasi Topik', style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: _isSending ? null : _submitForm,
+              style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
+              child: _isSending ? const CircularProgressIndicator(color: Colors.white) : const Text('Kirim ke Matriks WASPAS ➔'),
             )
           ],
         ),
@@ -46,31 +56,24 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
     );
   }
 
-  Widget _buildSelectionCard(String question, int groupValue, Function(int) onSelected, Color activeColor) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(question, style: const TextStyle(fontSize: 14)),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(5, (index) {
-              int val = index + 1;
-              bool isSelected = groupValue == val;
-              return GestureDetector(
-                onTap: () => onSelected(val),
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: isSelected ? activeColor : const Color(0xFFF1F5F9),
-                  child: Text('$val', style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
-                ),
-              );
-            }),
-          )
-        ],
+  Widget _buildSliderCard(String title, int qId) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Slider(
+              value: _selectedAnswers[qId]!.toDouble(),
+              min: 1, max: 5, divisions: 4,
+              label: _selectedAnswers[qId].toString(),
+              onChanged: (v) => setState(() => _selectedAnswers[qId] = v.toInt()),
+            ),
+          ],
+        ),
       ),
     );
   }

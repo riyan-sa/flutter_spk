@@ -3,14 +3,18 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/spk_provider.dart';
 import 'views/auth/login_page.dart';
-import 'views/main_navigation.dart'; // Import file navigasi baru
+import 'views/main_navigation.dart';
 import 'views/hasil/hasil_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final auth = AuthProvider();
+  await auth.checkLoginStatus();
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider.value(value: auth),
         ChangeNotifierProvider(create: (_) => SpkProvider()),
       ],
       child: const MainApp(),
@@ -25,11 +29,12 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/login',
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, _) => auth.isLoggedIn ? const MainNavigation() : const LoginPage(),
+      ),
       routes: {
         '/login': (context) => const LoginPage(),
-        // Ubah rute /dashboard agar memuat struktur MainNavigation yang punya navbar bawah
-        '/dashboard': (context) => const MainNavigation(), 
+        '/dashboard': (context) => const MainNavigation(),
         '/hasil-rekomendasi': (context) => const HasilPage(),
       },
     );
