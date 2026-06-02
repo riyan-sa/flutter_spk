@@ -17,7 +17,7 @@ class DashboardPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('school SKRIPSIAN', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+        title: const Text('SKRIPSIAN', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
         actions: const [Padding(padding: EdgeInsets.only(right: 16.0), child: CircleAvatar(backgroundColor: primaryColor, child: Text('A', style: TextStyle(color: Colors.white))))],
       ),
       body: SingleChildScrollView(
