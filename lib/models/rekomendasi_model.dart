@@ -1,19 +1,13 @@
 class RekomendasiModel {
-  final String judul;
-  final double skor;
-  final String kategori;
+  final int alternatifId;
+  final String namaAlternatif;
+  final double nilaiAkhir;
+  final int ranking;
 
   RekomendasiModel({
-    required this.judul,
-    required this.skor,
-    required this.kategori,
+    required this.alternatifId,
+    required this.namaAlternatif,
+    required this.nilaiAkhir,
+    required this.ranking,
   });
-
-  factory RekomendasiModel.fromJson(Map<String, dynamic> json) {
-    return RekomendasiModel(
-      judul: json['judul'],
-      skor: double.parse(json['skor'].toString()),
-      kategori: json['kategori'],
-    );
-  }
 }

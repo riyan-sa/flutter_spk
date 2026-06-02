@@ -1,19 +1,12 @@
 class RiwayatModel {
-  final int id;
-  final String judul;
+  final String namaAlternatif;
+  final double nilaiAkhir;
   final String tanggal;
 
+  // Constructor menggunakan data bertipe data kuat (Type-safe)
   RiwayatModel({
-    required this.id,
-    required this.judul,
+    required this.namaAlternatif,
+    required this.nilaiAkhir,
     required this.tanggal,
   });
-
-  factory RiwayatModel.fromJson(Map<String, dynamic> json) {
-    return RiwayatModel(
-      id: json['id'],
-      judul: json['judul'],
-      tanggal: json['created_at'],
-    );
-  }
-}
+} 
