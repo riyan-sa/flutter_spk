@@ -7,30 +7,27 @@ class HasilPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF0D5C4D); // Hijau Tua SKRIPSIAN
+    const primaryColor = Color(0xFF0D5C4D); // Hijau Tua SKRIPSIAN sesuai figma
     const textDarkColor = Color(0xFF0F766E); // Warna Teks Judul Utama / Badge
     const tableHeaderBg = Color(0xFFF1F5F9); // Latar belakang abu-abu terang header tabel
 
-    // Mengambil data terintegrasi hasil perhitungan WASPAS dari SpkProvider
+    // Mengambil data real-time hasil perhitungan WASPAS dari SpkProvider
     final listHasil = Provider.of<SpkProvider>(context).hasilTerbaru;
 
-    // Fungsi pembantu untuk memetakan nama kriteria agar kodenya sama persis dengan image_9be4e4.png
+    // Fungsi pembantu untuk memetakan nama alternatif agar kodenya sama persis dengan image_880743.png
     String getKodeTopik(String nama) {
-      if (nama.contains('Artificial Intelligence')) return 'A2';
-      if (nama.contains('Cyber Security')) return 'A2'; // Sesuai mockup figma
-      if (nama.contains('Cloud Computing')) return 'A3';
-      if (nama.contains('Software Engineering')) return 'A5';
-      if (nama.contains('Data Science')) return 'A1';
-      if (nama.contains('Internet of Things')) return 'A6';
-      if (nama.contains('Mobile Application')) return 'A4';
+      if (nama.contains('Artificial Intelligence')) return 'A2'; // Default rekomendasi teratas di mockup
+      if (nama.contains('Cyber Security') || nama.contains('Digital Forensics')) return 'A2'; 
+      if (nama.contains('Cloud Computing') || nama.contains('Virtualization')) return 'A3';
+      if (nama.contains('Software Engineering') || nama.contains('Agile')) return 'A5';
+      if (nama.contains('Data Science') || nama.contains('Big Data')) return 'A1';
+      if (nama.contains('Internet of Things') || nama.contains('IoT')) return 'A6';
+      if (nama.contains('Mobile Application') || nama.contains('Development')) return 'A4';
       return 'A0';
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // ==========================================
-      // APPBAR SESUAI IMAGE_9BE4E4.PNG
-      // ==========================================
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -63,7 +60,9 @@ class HasilPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Judul Utama Halaman
+                    // ==========================================
+                    // HEADER JUDUL UTAMA (GAYA IMAGE_88077B.PNG)
+                    // ==========================================
                     const Text(
                       'Hasil Rekomendasi\nTopik Skripsi Anda',
                       textAlign: TextAlign.center,
@@ -78,7 +77,7 @@ class HasilPage extends StatelessWidget {
                     const SizedBox(height: 28),
 
                     // ==========================================
-                    // CONTAINER UTAMA: PERINGKAT 1 (REKOMENDASI TERATAS)
+                    // KARTU UTAMA: PERINGKAT 1 (REKOMENDASI TERATAS)
                     // ==========================================
                     Container(
                       padding: const EdgeInsets.all(24.0),
@@ -110,7 +109,7 @@ class HasilPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 18),
                           
-                          // Judul Topik Teratas (Membesar & Centered)
+                          // Nama Alternatif Pemenang Rank 1 (Membesar & Bold Tengah)
                           Text(
                             listHasil.first.namaAlternatif,
                             textAlign: TextAlign.center,
@@ -125,7 +124,7 @@ class HasilPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
                           
-                          // Kotak Pencapaian Skor Qi dengan Ikon Piala
+                          // Box Trophy Abu-Abu Ringan Penampung Skor Akhir Qi
                           Container(
                             width: 140,
                             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
@@ -156,7 +155,7 @@ class HasilPage extends StatelessWidget {
                     const SizedBox(height: 32),
 
                     // ==========================================
-                    // KOMPONEN: TABEL PERINGKAT LAINNYA
+                    // KOMPONEN: TABEL PERINGKAT LAINNYA (IMAGE_880743.PNG)
                     // ==========================================
                     Container(
                       decoration: BoxDecoration(
@@ -181,7 +180,7 @@ class HasilPage extends StatelessWidget {
                           ),
                           const Divider(height: 1, color: Color(0xFFE2E8F0)),
                           
-                          // Baris Kepala Judul Kolom Tabel
+                          // Baris Judul Kolom Tabel
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             color: Colors.white,
@@ -195,39 +194,46 @@ class HasilPage extends StatelessWidget {
                           ),
                           const Divider(height: 1, color: Color(0xFFE2E8F0)),
 
-                          // Loop data alternatif tersisa dari API Laravel (Indeks ke-2 dst)
+                          // Menggambar List Alternatif Tersisa (Peringkat 2 ke bawah) secara dinamis
                           ListView.separated(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: listHasil.length - 1,
                             separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE2E8F0)),
                             itemBuilder: (context, index) {
-                              final item = listHasil[index + 1];
+                              final item = listHasil[index + 1]; // Melewati urutan teratas
                               int rankingKe = index + 2;
 
                               return Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                                 child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
                                       flex: 2,
-                                      child: Text(
-                                        '$rankingKe',
-                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 2.0),
+                                        child: Text(
+                                          '$rankingKe',
+                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                                        ),
                                       ),
                                     ),
                                     Expanded(
                                       flex: 2,
-                                      child: Text(
-                                        getKodeTopik(item.namaAlternatif),
-                                        style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 2.0),
+                                        child: Text(
+                                          getKodeTopik(item.namaAlternatif),
+                                          style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                        ),
                                       ),
                                     ),
                                     Expanded(
                                       flex: 6,
                                       child: Text(
                                         item.namaAlternatif,
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87, height: 1.3),
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87, height: 1.4),
                                       ),
                                     ),
                                   ],
@@ -241,7 +247,7 @@ class HasilPage extends StatelessWidget {
                     const SizedBox(height: 32),
 
                     // ==========================================
-                    // TOMBOL AKSI BAWAH (PDF & KEMBALI)
+                    // TOMBOL AKSI BAWAH (CETAK PDF & KEMBALI)
                     // ==========================================
                     ElevatedButton.icon(
                       onPressed: () {},

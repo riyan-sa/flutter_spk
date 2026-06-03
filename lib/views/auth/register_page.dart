@@ -12,10 +12,9 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   
-  // Controller penampung data register untuk ditembak ke API Laravel
+  // Controller yang disesuaikan pas dengan request body image_936fac.png
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -39,11 +38,10 @@ class _RegisterPageState extends State<RegisterPage> {
       setState(() => _isLoading = true);
 
       try {
-        // Mengirimkan payload pendaftaran akun mahasiswa ke endpoint Laravel backend Anda
+        // Tembak API Laravel pas dengan parameter: name, email, password, password_confirmation
         final response = await ApiClient.dio.post('/auth/register', data: {
           'name': _nameController.text.trim(),
           'email': _emailController.text.trim(),
-          'username': _usernameController.text.trim(),
           'password': _passwordController.text,
           'password_confirmation': _confirmPasswordController.text,
         });
@@ -53,15 +51,17 @@ class _RegisterPageState extends State<RegisterPage> {
         if (response.statusCode == 200 || response.statusCode == 201) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Registrasi Berhasil! Silakan login.'), backgroundColor: Color(0xFF0D5C4D)),
+              const SnackBar(
+                content: Text('Registrasi Berhasil! Silakan masuk.'), 
+                backgroundColor: Color(0xFF0D5C4D),
+              ),
             );
-            // Kembalikan user ke halaman login setelah akun sukses terdaftar di MySQL
             Navigator.pushReplacementNamed(context, '/login');
           }
         }
       } on DioException catch (e) {
         setState(() => _isLoading = false);
-        final errorMessage = e.response?.data['message'] ?? 'Gagal mendaftarkan akun. Periksa kembali data Anda!';
+        final errorMessage = e.response?.data['message'] ?? 'Gagal mendaftarkan akun. Periksa kembali jaringan atau data Anda!';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMessage), backgroundColor: Colors.redAccent),
@@ -75,7 +75,6 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -83,9 +82,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF0D5C4D); // Hijau Tua SKRIPSIAN
-    const tealColor = Color(0xFF14B8A6);    // Teal Link Aksentuasi
-    const frameBgColor = Color(0xFFF8FAFC);  // Latar belakang luar abu-abu figma
+    const primaryColor = Color(0xFF0D5C4D); 
+    const tealColor = Color(0xFF14B8A6);    
+    const frameBgColor = Color(0xFFF8FAFC);  
 
     return Scaffold(
       backgroundColor: frameBgColor,
@@ -96,14 +95,11 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Card(
               color: Colors.white,
               elevation: 1,
-              shadowColor: Colors.black12,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ==========================================
-                  // SECTION 1: HEADER REGISTRASI (GAYA IMAGE_9BDE17.PNG)
-                  // ==========================================
+                  // Header Logo & Judul
                   Padding(
                     padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 32.0, bottom: 8.0),
                     child: Column(
@@ -128,9 +124,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   
-                  // ==========================================
-                  // SECTION 2: INPUT FIELDS FORM REGISTRASI
-                  // ==========================================
+                  // Form Fields
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                     child: Form(
@@ -163,17 +157,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 18),
 
-                          // FIELD 3: NIM / USERNAME
-                          _buildInputLabel('NIM/Username'),
-                          TextFormField(
-                            controller: _usernameController,
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
-                            decoration: _buildInputDecoration('Masukkan NIM atau username', null),
-                            validator: (v) => v == null || v.isEmpty ? 'NIM atau username wajib diisi' : null,
-                          ),
-                          const SizedBox(height: 18),
-
-                          // FIELD 4: PASSWORD
+                          // FIELD 3: PASSWORD
                           _buildInputLabel('Password'),
                           TextFormField(
                             controller: _passwordController,
@@ -190,8 +174,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 18),
 
-                          // FIELD 5: KONFIRMASI PASSWORD
-                          _buildInputLabel('Konfirmasi Password'),
+                          // FIELD 4: MASUKAN ULANG PASSWORD (PASSWORD CONFIRMATION)
+                          _buildInputLabel('Masukan Ulang Password'),
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: _isConfirmPasswordObscured,
@@ -211,7 +195,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 20),
 
-                          // CHECKBOX SYARAT & KETENTUAN
+                          // Checkbox Persetujuan S&K
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -244,7 +228,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 24),
 
-                          // TOMBOL SUBMIT REGISTER
+                          // Tombol Daftar Sekarang
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -270,7 +254,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 20),
 
-                          // LINK UNTUK KEMBALI KE LOGIN
+                          // Link Kembali Ke Login
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -286,13 +270,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
 
-                  // ==========================================
-                  // SECTION 3: FOOTER KEAMANAN DATA TERJAMIN
-                  // ==========================================
+                  // Footer Keamanan Jaminan Data
                   Container(
                     padding: const EdgeInsets.all(20.0),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF8FAFC), // Warna abu figma bawah card
+                      color: Color(0xFFF8FAFC), 
                       borderRadius: BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
                     ),
                     child: Row(
@@ -332,7 +314,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // Widget kecil pembantu untuk merender label form input
   Widget _buildInputLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -343,7 +324,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // Fungsi pembantu dekorasi input box agar mirip 100% dengan gaya minimalis figma
   InputDecoration _buildInputDecoration(String hint, Widget? suffix) {
     return InputDecoration(
       hintText: hint,

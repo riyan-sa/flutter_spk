@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/spk_provider.dart';
+import '../penilaian/form_penilaian_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -91,7 +92,11 @@ class _DashboardPageState extends State<DashboardPage> {
             // TOMBOL UTAMA: MULAI CARI TOPIK SKRIPSI
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pushNamed(context, '/form-penilaian');
+                // ➔ DIGANTI MENGGUNAKAN DIRECT ROUTE TANPA NAMED
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const FormPenilaianPage()),
+                );
               },
               icon: const Icon(Icons.rocket_launch_rounded, size: 18),
               label: const Text(

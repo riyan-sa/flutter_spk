@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/spk_provider.dart';
 import 'views/auth/login_page.dart';
+import 'views/auth/register_page.dart';
 import 'views/main_navigation.dart';
+import 'views/penilaian/form_penilaian_page.dart';
 import 'views/hasil/hasil_page.dart';
 
 void main() async {
@@ -34,7 +36,9 @@ class MainApp extends StatelessWidget {
       ),
       routes: {
         '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegisterPage(),
         '/dashboard': (context) => const MainNavigation(),
+        '/form-penilaian': (context) => const FormPenilaianPage(),
         '/hasil-rekomendasi': (context) => const HasilPage(),
       },
     );
