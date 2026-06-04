@@ -11,25 +11,25 @@ class SpkProvider with ChangeNotifier {
   List<RiwayatModel> get riwayat => _riwayat;
   List<RekomendasiModel> get hasilTerbaru => _hasilTerbaru;
 
-  // Mengirim jawaban kuisioner berformat array answers ke Laravel
-  Future<bool> submitPenilaian(List<Map<String, int>> answers) async {
-    try {
-      final response = await ApiClient.dio.post('/questionnaire', data: {
-        'answers': answers
-      });
+  // ➔ UBAH PARAMETER MENJADI DYNAMIC AGAR BISA MENERIMA KODE ALFA-NUMERIK 'A1'
+    Future<bool> submitPenilaian(List<Map<String, dynamic>> answers) async {
+      try {
+        final response = await ApiClient.dio.post('/questionnaire', data: {
+          'answers': answers
+        });
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<dynamic> dataJson = response.data['recommendation'];
-        _hasilTerbaru = dataJson.map((json) => RekomendasiModel.fromJson(json)).toList();
-        notifyListeners();
-        return true;
+        if (response.statusCode == 200 && response.data['success'] == true) {
+          final List<dynamic> dataJson = response.data['recommendation'];
+          _hasilTerbaru = dataJson.map((json) => RekomendasiModel.fromJson(json)).toList();
+          notifyListeners();
+          return true;
+        }
+        return false;
+      } on DioException catch (e) {
+        debugPrint('Submit Penilaian Error: ${e.response?.data}');
+        return false;
       }
-      return false;
-    } on DioException catch (e) {
-      debugPrint('Submit Penilaian Error: ${e.response?.data}');
-      return false;
     }
-  }
 
   // Mengambil daftar histori perhitungan WASPAS dari database Laravel
   Future<void> fetchRiwayat() async {

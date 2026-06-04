@@ -14,9 +14,9 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isSending = false;
 
-  // ==========================================
-  // CONTROLLER SECTION C1 (NILAI MATA KULIAH)
-  // ==========================================
+  // =========================================================
+  // CONTROLLER SECTION C1 (INPUT DATA NILAI MATA KULIAH)
+  // =========================================================
   final Map<String, TextEditingController> _c1Controllers = {
     'rpl': TextEditingController(),
     'framework': TextEditingController(),
@@ -27,9 +27,9 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
     'mobile': TextEditingController(),
   };
 
-  // ==========================================
-  // DATA STRUKTUR BIDANG TOPIK (A1 - A8)
-  // ==========================================
+  // =========================================================
+  // DATA STRUKTUR BIDANG TOPIK SKRIPSI (ALTERNATIF A1 - A8)
+  // =========================================================
   final List<Map<String, String>> _topikList = [
     {'id': 'A1', 'name': 'A1 – Software Engineering'},
     {'id': 'A2', 'name': 'A2 – Web & Enterprise Application'},
@@ -40,13 +40,13 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
     {'id': 'A8', 'name': 'A8 – Mobile & Smart Application'},
   ];
 
-  // State Nilai Tampung Kuesioner per Bidang Topik
+  // State Pilihan Nilai Kuesioner (Default Skala Tengah: 3)
   final Map<String, dynamic> _kuesionerValues = {};
 
   @override
   void initState() {
     super.initState();
-    // Inisialisasi nilai default (3 untuk skala 1-5) untuk setiap topik
+    // Menginisialisasi nilai default kuesioner awal untuk seluruh bidang studi
     for (var topik in _topikList) {
       String id = topik['id']!;
       _kuesionerValues['${id}_C2'] = 3; 
@@ -64,89 +64,119 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
     super.dispose();
   }
 
- void _submitDataKeWaspas() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isSending = true);
+  // =========================================================
+  // LOGIKA PEMROSESAN & SINKRONISASI PAYLOAD KE API LARAVEL
+  // =========================================================
+    void _submitDataKeWaspas() async {
+      if (_formKey.currentState!.validate()) {
+        setState(() => _isSending = true);
 
-      // 1. Ekstrak & Hitung Rata-Rata Nilai C1 (Skala 0-100)
-      double totalC1 = 0;
-      _c1Controllers.forEach((key, controller) {
-        totalC1 += double.tryParse(controller.text) ?? 0.0;
-      });
-      double rataRataC1Raw = totalC1 / _c1Controllers.length;
+        // 1. Hitung Rata-Rata Nilai C1 (Skala 0-100)
+        double totalC1 = 0;
+        _c1Controllers.forEach((key, controller) {
+          String sanitizeValue = controller.text.replaceAll(',', '.').trim();
+          totalC1 += double.tryParse(sanitizeValue) ?? 0.0;
+        });
+        double rataRataC1Raw = totalC1 / _c1Controllers.length;
 
-      // KONSISTENSI VALIDASI: Konversi nilai ujian 0-100 menjadi Skala Likert 1-5
-      int nilaiRataRataC1;
-      if (rataRataC1Raw >= 85) {
-        nilaiRataRataC1 = 5; // Sangat Baik
-      } else if (rataRataC1Raw >= 75) {
-        nilaiRataRataC1 = 4; // Baik
-      } else if (rataRataC1Raw >= 60) {
-        nilaiRataRataC1 = 3; // Cukup
-      } else if (rataRataC1Raw >= 45) {
-        nilaiRataRataC1 = 2; // Kurang
-      } else {
-        nilaiRataRataC1 = 1; // Sangat Kurang
-      }
+        // Konversi bobot nilai akademis menjadi Skala Likert 1-5
+        int nilaiRataRataC1;
+        if (rataRataC1Raw >= 85) {
+          nilaiRataRataC1 = 5;
+        } else if (rataRataC1Raw >= 75) {
+          nilaiRataRataC1 = 4;
+        } else if (rataRataC1Raw >= 60) {
+          nilaiRataRataC1 = 3;
+        } else if (rataRataC1Raw >= 45) {
+          nilaiRataRataC1 = 2;
+        } else {
+          nilaiRataRataC1 = 1;
+        }
 
-      // 2. Format struktur payload jawaban dinamis ke format Array Map
-      final List<Map<String, int>> payloadAnswers = [
-        {'question_id': 1, 'answer_value': nilaiRataRataC1}, // Aman dikirim karena nilainya 1-5
-      ];
+        // 2. STRUKTUR PAYLOAD PRESISI METODE WASPAS
+        final List<Map<String, dynamic>> payloadAnswers = [];
 
-      // Hitung rata-rata kuesioner gabungan bidang untuk C2, C3, C4, C9
-      double totalC2 = 0, totalC3 = 0, totalC4 = 0, totalC9 = 0;
-      for (var topik in _topikList) {
-        String id = topik['id']!;
-        totalC2 += _kuesionerValues['${id}_C2'] as int;
-        totalC3 += _kuesionerValues['${id}_C3'] as int;
-        totalC4 += (_kuesionerValues['${id}_C4'] as double).toInt();
-        totalC9 += _kuesionerValues['${id}_C9'] as int;
-      }
+        // A. Masukkan kriteria C1 secara GLOBAL/TUNGGAL (Tidak di dalam loop alternatif)
+        payloadAnswers.add({
+          'criteria_id': 1,
+          'alternative_id': null, // Di-null agar tidak mengacaukan matriks alternatif Laravel
+          'answer_value': nilaiRataRataC1,
+        });
 
-      int len = _topikList.length;
-      payloadAnswers.add({'question_id': 2, 'answer_value': (totalC2 / len).round()});
-      payloadAnswers.add({'question_id': 3, 'answer_value': (totalC3 / len).round()});
-      payloadAnswers.add({'question_id': 4, 'answer_value': (totalC4 / len).round()});
-      payloadAnswers.add({'question_id': 9, 'answer_value': (totalC9 / len).round()});
+        // B. Masukkan kriteria C2, C3, C4, C9 secara DETAIL per Alternatif
+        for (var topik in _topikList) {
+          String idAltStr = topik['id']!; 
+          int alternativeId = int.parse(idAltStr.replaceAll(RegExp(r'[^0-9]'), ''));
 
-      // Log ke debug console untuk melihat payload sebelum dikirim
-      debugPrint('Payload dikirim ke Laravel: $payloadAnswers');
+          int valC2 = _kuesionerValues['${idAltStr}_C2'] as int;
+          int valC3 = _kuesionerValues['${idAltStr}_C3'] as int;
+          int valC4 = (_kuesionerValues['${idAltStr}_C4'] as double).toInt();
+          int valC9 = _kuesionerValues['${idAltStr}_C9'] as int;
 
-      bool success = await Provider.of<SpkProvider>(context, listen: false).submitPenilaian(payloadAnswers);
+          // C2 - Kriteria Minat
+          payloadAnswers.add({
+            'criteria_id': 2,
+            'alternative_id': alternativeId,
+            'answer_value': valC2,
+          });
 
-      setState(() => _isSending = false);
+          // C3 - Kriteria Pengalaman
+          payloadAnswers.add({
+            'criteria_id': 3,
+            'alternative_id': alternativeId,
+            'answer_value': valC3,
+          });
 
-      if (success && mounted) {
-        Navigator.pushNamed(context, '/hasil-rekomendasi');
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal memproses perhitungan ke server Laravel! Periksa kesesuaian parameter data.'), 
-            backgroundColor: Colors.redAccent
-          ),
-        );
+          // C4 - Kriteria Penguasaan Teknologi
+          payloadAnswers.add({
+            'criteria_id': 4,
+            'alternative_id': alternativeId,
+            'answer_value': valC4,
+          });
+
+          // C9 - Kriteria Ketersediaan Dataset
+          payloadAnswers.add({
+            'criteria_id': 9,
+            'alternative_id': alternativeId,
+            'answer_value': valC9,
+          });
+        }
+
+        // Cetak payload ter-generate di debug console untuk pengecekan
+        debugPrint('Payload Matriks Sempurna WASPAS: $payloadAnswers');
+
+        // Tembak data kuesioner dinamis ke Laravel
+        bool success = await Provider.of<SpkProvider>(context, listen: false).submitPenilaian(payloadAnswers);
+
+        setState(() => _isSending = false);
+
+        if (success && mounted) {
+          Navigator.pushNamed(context, '/hasil-rekomendasi');
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Gagal memproses perhitungan! Sesi data ditolak oleh WaspasService.'), 
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
       }
     }
-  }
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF0D5C4D); // Hijau Utama SKRIPSIAN
-    const darkFieldColor = Color(0xFF1E293B); // Background Input Box Gelap
-    const tealTextColor = Color(0xFF0F766E); // Warna Teks Label Kriteria
+    const primaryColor = Color(0xFF0D5C4D); 
+    const darkFieldColor = Color(0xFF1E293B); 
+    const tealTextColor = Color(0xFF0F766E); 
 
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // ==========================================
-      // APPBAR YANG SUDAH DISESUAIKAN (TANPA GARIS 3 & AVATAR SAMA DENGAN DASHBOARD)
-      // ==========================================
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false, // Menghilangkan tombol back otomatis jika ada tumpukan halaman
+        automaticallyImplyLeading: false, 
         title: const Text(
           'SKRIPSIAN',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: primaryColor, letterSpacing: 0.5),
@@ -177,7 +207,6 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // HEADLINE: STUDENT ASSESSMENT
                 const Text(
                   'Student Assessment',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
@@ -189,7 +218,9 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // HEADER SECTION C1
+                // =========================================================
+                // TAMPILAN SECTION C1 (NILAI MATA KULIAH GRID MODEL)
+                // =========================================================
                 Row(
                   children: [
                     Container(
@@ -206,7 +237,6 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                 ),
                 const SizedBox(height: 14),
 
-                // GRID TEXTBOXES FOR C1
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
@@ -246,7 +276,9 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // LOOPING CARD UNTUK TOPIK A1 SAMPAI A8
+                // =========================================================
+                // LOOPING KOMPONEN CARD KUESIONER BIDANG TOPIK (A1 - A8)
+                // =========================================================
                 ..._topikList.map((topik) {
                   String id = topik['id']!;
                   return Container(
@@ -332,7 +364,7 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                 }),
                 const SizedBox(height: 16),
 
-                // BUTTON HITUNG
+                // TOMBOL SUBMIT PROSES WASPAS
                 ElevatedButton(
                   onPressed: _isSending ? null : _submitDataKeWaspas,
                   style: ElevatedButton.styleFrom(
@@ -361,6 +393,7 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
     );
   }
 
+  // WIDGET INPUT BOX AMAN DARI EROR LOCALIZATION DECIMAL KEYBOARD HP
   Widget _buildGridTextBox(String title, TextEditingController ctrl, Color bgFieldColor, {bool isFullWidth = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,17 +408,22 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'monospace'),
           decoration: InputDecoration(
-            hintText: '0.00',
+            hintText: '00',
             hintStyle: TextStyle(color: Colors.grey[500], fontSize: 13, fontFamily: 'monospace'),
             filled: true,
             fillColor: bgFieldColor,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 10),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
+            focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: Colors.redAccent, width: 1)),
           ),
           validator: (v) {
-            if (v == null || v.isEmpty) return 'Wajib';
-            final n = double.tryParse(v);
-            if (n == null || n < 0 || n > 100) return '0-100';
+            if (v == null || v.trim().isEmpty) return 'Wajib diisi';
+            String sanitized = v.replaceAll(',', '.').trim();
+            final n = double.tryParse(sanitized);
+            if (n == null) return 'Format salah';
+            if (n < 0 || n > 100) return 'Rentang 0-100';
             return null;
           },
         ),
