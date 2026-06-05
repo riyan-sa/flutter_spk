@@ -7,11 +7,15 @@ import 'views/auth/register_page.dart';
 import 'views/main_navigation.dart';
 import 'views/penilaian/form_penilaian_page.dart';
 import 'views/hasil/hasil_page.dart';
+import 'views/history/history_page.dart';
+// Import file splash screen dan theme lu
+import 'views/splash/splash_page.dart';
+import 'shared/theme.dart';
 
-void main() async {
+// Hapus 'async' di void main karena kita gak butuh await checkLoginStatus lagi di sini
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final auth = AuthProvider();
-  await auth.checkLoginStatus();
 
   runApp(
     MultiProvider(
@@ -31,15 +35,18 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, _) => auth.isLoggedIn ? const MainNavigation() : const LoginPage(),
-      ),
+      theme: AppTheme.lightTheme, // Memasang tema kustom lu
+      // Aplikasi sekarang SELALU mulai dari SplashPage
+      home: const SplashPage(),
+
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/dashboard': (context) => const MainNavigation(),
         '/form-penilaian': (context) => const FormPenilaianPage(),
         '/hasil-rekomendasi': (context) => const HasilPage(),
+        '/history': (context) =>
+            const HistoryPage(), // Tambahkan route untuk HistoryPage
       },
     );
   }

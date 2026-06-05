@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dashboard/dashboard_page.dart';
 import 'penilaian/form_penilaian_page.dart';
+import 'profile/profile_page.dart';
+import 'history/history_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -16,21 +18,22 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _pages = [
     const DashboardPage(),
     const FormPenilaianPage(),
-    const Center(child: Text('Halaman History', style: TextStyle(color: Colors.grey))),
-    const Center(child: Text('Halaman Profil', style: TextStyle(color: Colors.grey))),
+    const HistoryPage(),
+    const Profilepage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF0D5C4D); // Hijau Tua SKRIPSIAN
-    const activeMintColor = Color(0xFF6EE7B7); // Hijau Mint Terang untuk isi Cari Topik aktif
-    const inactiveColor = Color(0xFF334155); // Abu-abu Slate untuk menu tidak aktif
+    const activeMintColor = Color(
+      0xFF6EE7B7,
+    ); // Hijau Mint Terang untuk isi Cari Topik aktif
+    const inactiveColor = Color(
+      0xFF334155,
+    ); // Abu-abu Slate untuk menu tidak aktif
 
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _pages),
       // ==========================================
       // REVISI KUSTOM NAVBAR SESUAI IMAGE_76B986.PNG
       // ==========================================
@@ -40,7 +43,9 @@ class _MainNavigationState extends State<MainNavigation> {
           color: Colors.white,
           border: Border(
             top: BorderSide(
-              color: Color(0xFFE2E8F0), // Garis pembatas abu-abu tipis atas navbar
+              color: Color(
+                0xFFE2E8F0,
+              ), // Garis pembatas abu-abu tipis atas navbar
               width: 1.5,
             ),
           ),
@@ -65,22 +70,31 @@ class _MainNavigationState extends State<MainNavigation> {
                 onTap: () => setState(() => _selectedIndex = 1),
                 child: _selectedIndex == 1
                     ? Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: primaryColor,
-                          borderRadius: BorderRadius.circular(16), // Sisi melengkung figma kotak
+                          borderRadius: BorderRadius.circular(
+                            16,
+                          ), // Sisi melengkung figma kotak
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.auto_awesome_rounded, color: activeMintColor, size: 22),
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              color: activeMintColor,
+                              size: 22,
+                            ),
                             SizedBox(height: 2),
                             Text(
                               'Cari Topik',
                               style: TextStyle(
-                                color: activeMintColor, 
-                                fontWeight: FontWeight.bold, 
-                                fontSize: 12
+                                color: activeMintColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
                               ),
                             ),
                           ],
@@ -89,14 +103,18 @@ class _MainNavigationState extends State<MainNavigation> {
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
-                          Icon(Icons.auto_awesome_rounded, color: inactiveColor, size: 22),
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            color: inactiveColor,
+                            size: 22,
+                          ),
                           SizedBox(height: 4),
                           Text(
                             'Cari Topik',
                             style: TextStyle(
-                              color: inactiveColor, 
-                              fontWeight: FontWeight.w500, 
-                              fontSize: 12
+                              color: inactiveColor,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
                             ),
                           ),
                         ],

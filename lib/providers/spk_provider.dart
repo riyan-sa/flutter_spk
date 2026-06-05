@@ -12,24 +12,30 @@ class SpkProvider with ChangeNotifier {
   List<RekomendasiModel> get hasilTerbaru => _hasilTerbaru;
 
   // ➔ UBAH PARAMETER MENJADI DYNAMIC AGAR BISA MENERIMA KODE ALFA-NUMERIK 'A1'
-    Future<bool> submitPenilaian(List<Map<String, dynamic>> answers) async {
-      try {
-        final response = await ApiClient.dio.post('/questionnaire', data: {
-          'answers': answers
-        });
+  Future<bool> submitPenilaian(List<Map<String, dynamic>> answers) async {
+    try {
+      final response = await ApiClient.dio.post(
+        '/questionnaire',
+        data: {'answers': answers},
+      );
 
-        if (response.statusCode == 200 && response.data['success'] == true) {
-          final List<dynamic> dataJson = response.data['recommendation'];
-          _hasilTerbaru = dataJson.map((json) => RekomendasiModel.fromJson(json)).toList();
-          notifyListeners();
-          return true;
-        }
-        return false;
-      } on DioException catch (e) {
-        debugPrint('Submit Penilaian Error: ${e.response?.data}');
-        return false;
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        // Tambahkan fallback [] agar tidak error jika 'recommendation' ternyata null dari API
+        final List<dynamic> dataJson = response.data['recommendation'] ?? [];
+        _hasilTerbaru = dataJson
+            .map((json) => RekomendasiModel.fromJson(json))
+            .toList();
+        notifyListeners();
+        return true;
       }
+      return false;
+    } catch (e) {
+      // GANTI DARI "on DioException catch" MENJADI "catch (e)"
+      // Biar semua error ketangkep dan gak bikin loading abadi
+      debugPrint('Submit Penilaian Error (Jaringan/Parsing): $e');
+      return false;
     }
+  }
 
   // Mengambil daftar histori perhitungan WASPAS dari database Laravel
   Future<void> fetchRiwayat() async {

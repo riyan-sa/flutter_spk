@@ -37,7 +37,8 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
     {'id': 'A4', 'name': 'A4 – Artificial Intelligence'},
     {'id': 'A5', 'name': 'A5 – System Analyst & DSS'},
     {'id': 'A6', 'name': 'A6 – Data Science & BI'},
-    {'id': 'A8', 'name': 'A8 – Mobile & Smart Application'},
+    {'id': 'A7', 'name': 'A7 – Mobile & Smart Application'},
+    {'id': 'A8', 'name': 'A8 – Multimedia & Computer Vision'},
   ];
 
   // State Pilihan Nilai Kuesioner (Default Skala Tengah: 3)
@@ -49,10 +50,10 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
     // Menginisialisasi nilai default kuesioner awal untuk seluruh bidang studi
     for (var topik in _topikList) {
       String id = topik['id']!;
-      _kuesionerValues['${id}_C2'] = 3; 
-      _kuesionerValues['${id}_C3'] = 3; 
-      _kuesionerValues['${id}_C4'] = 3.0; 
-      _kuesionerValues['${id}_C9'] = 3; 
+      _kuesionerValues['${id}_C2'] = 3;
+      _kuesionerValues['${id}_C3'] = 3;
+      _kuesionerValues['${id}_C4'] = 3.0;
+      _kuesionerValues['${id}_C9'] = 3;
     }
   }
 
@@ -67,107 +68,121 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
   // =========================================================
   // LOGIKA PEMROSESAN & SINKRONISASI PAYLOAD KE API LARAVEL
   // =========================================================
-    void _submitDataKeWaspas() async {
-      if (_formKey.currentState!.validate()) {
-        setState(() => _isSending = true);
+  void _submitDataKeWaspas() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isSending = true);
 
-        // 1. Hitung Rata-Rata Nilai C1 (Skala 0-100)
-        double totalC1 = 0;
-        _c1Controllers.forEach((key, controller) {
-          String sanitizeValue = controller.text.replaceAll(',', '.').trim();
-          totalC1 += double.tryParse(sanitizeValue) ?? 0.0;
-        });
-        double rataRataC1Raw = totalC1 / _c1Controllers.length;
+      // 1. Hitung Rata-Rata Nilai C1 (Skala 0-100)
+      double totalC1 = 0;
+      _c1Controllers.forEach((key, controller) {
+        String sanitizeValue = controller.text.replaceAll(',', '.').trim();
+        totalC1 += double.tryParse(sanitizeValue) ?? 0.0;
+      });
+      double rataRataC1Raw = totalC1 / _c1Controllers.length;
 
-        // Konversi bobot nilai akademis menjadi Skala Likert 1-5
-        int nilaiRataRataC1;
-        if (rataRataC1Raw >= 85) {
-          nilaiRataRataC1 = 5;
-        } else if (rataRataC1Raw >= 75) {
-          nilaiRataRataC1 = 4;
-        } else if (rataRataC1Raw >= 60) {
-          nilaiRataRataC1 = 3;
-        } else if (rataRataC1Raw >= 45) {
-          nilaiRataRataC1 = 2;
-        } else {
-          nilaiRataRataC1 = 1;
-        }
+      // Konversi bobot nilai akademis menjadi Skala Likert 1-5
+      int nilaiRataRataC1;
+      if (rataRataC1Raw >= 85) {
+        nilaiRataRataC1 = 5;
+      } else if (rataRataC1Raw >= 75) {
+        nilaiRataRataC1 = 4;
+      } else if (rataRataC1Raw >= 60) {
+        nilaiRataRataC1 = 3;
+      } else if (rataRataC1Raw >= 45) {
+        nilaiRataRataC1 = 2;
+      } else {
+        nilaiRataRataC1 = 1;
+      }
 
-        // 2. STRUKTUR PAYLOAD PRESISI METODE WASPAS
-        final List<Map<String, dynamic>> payloadAnswers = [];
+      // 2. STRUKTUR PAYLOAD PRESISI METODE WASPAS
+      final List<Map<String, dynamic>> payloadAnswers = [];
 
-        // A. Masukkan kriteria C1 secara GLOBAL/TUNGGAL (Tidak di dalam loop alternatif)
+      // Masukkan SEMUA kriteria (C1, C2, C3, C4, C9) secara DETAIL per Alternatif
+      for (var topik in _topikList) {
+        String idAltStr = topik['id']!;
+
+        // Ekstrak angka dari ID (misal 'A1' jadi 1, 'A2' jadi 2) agar sesuai dengan ID di database
+        int alternativeId = int.parse(
+          idAltStr.replaceAll(RegExp(r'[^0-9]'), ''),
+        );
+
+        int valC2 = _kuesionerValues['${idAltStr}_C2'] as int;
+        int valC3 = _kuesionerValues['${idAltStr}_C3'] as int;
+        int valC4 = (_kuesionerValues['${idAltStr}_C4'] as double).toInt();
+        int valC9 = _kuesionerValues['${idAltStr}_C9'] as int;
+
+        // C1 - Kriteria Akademis
         payloadAnswers.add({
           'criteria_id': 1,
-          'alternative_id': null, // Di-null agar tidak mengacaukan matriks alternatif Laravel
-          'answer_value': nilaiRataRataC1,
+          'alternative_id': alternativeId,
+          'nilai': nilaiRataRataC1, // <--- UBAH DI SINI
         });
 
-        // B. Masukkan kriteria C2, C3, C4, C9 secara DETAIL per Alternatif
-        for (var topik in _topikList) {
-          String idAltStr = topik['id']!; 
-          int alternativeId = int.parse(idAltStr.replaceAll(RegExp(r'[^0-9]'), ''));
+        // C2 - Kriteria Minat
+        payloadAnswers.add({
+          'criteria_id': 2,
+          'alternative_id': alternativeId,
+          'nilai': valC2, // <--- UBAH DI SINI
+        });
 
-          int valC2 = _kuesionerValues['${idAltStr}_C2'] as int;
-          int valC3 = _kuesionerValues['${idAltStr}_C3'] as int;
-          int valC4 = (_kuesionerValues['${idAltStr}_C4'] as double).toInt();
-          int valC9 = _kuesionerValues['${idAltStr}_C9'] as int;
+        // C3 - Kriteria Pengalaman
+        payloadAnswers.add({
+          'criteria_id': 3,
+          'alternative_id': alternativeId,
+          'nilai': valC3, // <--- UBAH DI SINI
+        });
 
-          // C2 - Kriteria Minat
-          payloadAnswers.add({
-            'criteria_id': 2,
-            'alternative_id': alternativeId,
-            'answer_value': valC2,
-          });
+        // C4 - Kriteria Penguasaan Teknologi
+        payloadAnswers.add({
+          'criteria_id': 4,
+          'alternative_id': alternativeId,
+          'nilai': valC4, // <--- UBAH DI SINI
+        });
 
-          // C3 - Kriteria Pengalaman
-          payloadAnswers.add({
-            'criteria_id': 3,
-            'alternative_id': alternativeId,
-            'answer_value': valC3,
-          });
+        // C9 - Kriteria Ketersediaan Dataset
+        payloadAnswers.add({
+          'criteria_id': 5,
+          'alternative_id': alternativeId,
+          'nilai': valC9, // <--- UBAH DI SINI
+        });
+      }
 
-          // C4 - Kriteria Penguasaan Teknologi
-          payloadAnswers.add({
-            'criteria_id': 4,
-            'alternative_id': alternativeId,
-            'answer_value': valC4,
-          });
+      debugPrint('Payload Matriks Sempurna WASPAS: $payloadAnswers');
 
-          // C9 - Kriteria Ketersediaan Dataset
-          payloadAnswers.add({
-            'criteria_id': 9,
-            'alternative_id': alternativeId,
-            'answer_value': valC9,
-          });
-        }
-
-        // Cetak payload ter-generate di debug console untuk pengecekan
-        debugPrint('Payload Matriks Sempurna WASPAS: $payloadAnswers');
-
-        // Tembak data kuesioner dinamis ke Laravel
-        bool success = await Provider.of<SpkProvider>(context, listen: false).submitPenilaian(payloadAnswers);
-
-        setState(() => _isSending = false);
+      // Tembak data kuesioner dinamis ke Laravel
+      // Tembak data kuesioner dinamis ke Laravel
+      try {
+        bool success = await Provider.of<SpkProvider>(
+          context,
+          listen: false,
+        ).submitPenilaian(payloadAnswers);
 
         if (success && mounted) {
-          Navigator.pushNamed(context, '/hasil-rekomendasi');
+          Navigator.pushReplacementNamed(context, '/hasil-rekomendasi');
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Gagal memproses perhitungan! Sesi data ditolak oleh WaspasService.'), 
+              content: Text('Gagal memproses perhitungan dari server.'),
               backgroundColor: Colors.redAccent,
             ),
           );
         }
+      } catch (e) {
+        debugPrint("Error fatal UI: $e");
+      } finally {
+        // Memastikan loading PASTI berhenti apa pun yang terjadi
+        if (mounted) {
+          setState(() => _isSending = false);
+        }
       }
     }
+  }
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF0D5C4D); 
-    const darkFieldColor = Color(0xFF1E293B); 
-    const tealTextColor = Color(0xFF0F766E); 
+    const primaryColor = Color(0xFF0D5C4D);
+    const darkFieldColor = Color(0xFF1E293B);
+    const tealTextColor = Color(0xFF0F766E);
 
     final authProvider = Provider.of<AuthProvider>(context);
 
@@ -176,10 +191,15 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
         title: const Text(
           'SKRIPSIAN',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: primaryColor, letterSpacing: 0.5),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: primaryColor,
+            letterSpacing: 0.5,
+          ),
         ),
         actions: [
           Padding(
@@ -188,11 +208,17 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
               radius: 16,
               backgroundColor: primaryColor,
               child: Text(
-                authProvider.userName.isNotEmpty ? authProvider.userName[0].toUpperCase() : 'R',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                authProvider.userName.isNotEmpty
+                    ? authProvider.userName[0].toUpperCase()
+                    : 'R',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
             ),
-          )
+          ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.5),
@@ -209,12 +235,20 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
               children: [
                 const Text(
                   'Student Assessment',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Complete the following evaluation to receive an AI-driven thesis topic recommendation based on your academic performance and interests.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600], height: 1.4),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -224,14 +258,31 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFF99F6E4), borderRadius: BorderRadius.circular(4)),
-                      child: const Text('C1', style: TextStyle(color: tealTextColor, fontWeight: FontWeight.bold, fontSize: 11)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF99F6E4),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'C1',
+                        style: TextStyle(
+                          color: tealTextColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 10),
                     const Text(
                       'Nilai Mata Kuliah Relevan',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: tealTextColor),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: tealTextColor,
+                      ),
                     ),
                   ],
                 ),
@@ -248,29 +299,70 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                     children: [
                       Row(
                         children: [
-                          Expanded(child: _buildGridTextBox('Rekayasa Perangkat\nLunak', _c1Controllers['rpl']!, darkFieldColor)),
+                          Expanded(
+                            child: _buildGridTextBox(
+                              'Rekayasa Perangkat\nLunak',
+                              _c1Controllers['rpl']!,
+                              darkFieldColor,
+                            ),
+                          ),
                           const SizedBox(width: 14),
-                          Expanded(child: _buildGridTextBox('Framework\nProgramming', _c1Controllers['framework']!, darkFieldColor)),
+                          Expanded(
+                            child: _buildGridTextBox(
+                              'Framework\nProgramming',
+                              _c1Controllers['framework']!,
+                              darkFieldColor,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 14),
                       Row(
                         children: [
-                          Expanded(child: _buildGridTextBox('Sistem Basis Data', _c1Controllers['db']!, darkFieldColor)),
+                          Expanded(
+                            child: _buildGridTextBox(
+                              'Sistem Basis Data',
+                              _c1Controllers['db']!,
+                              darkFieldColor,
+                            ),
+                          ),
                           const SizedBox(width: 14),
-                          Expanded(child: _buildGridTextBox('Kecerdasan Buatan\n(AI)', _c1Controllers['ai']!, darkFieldColor)),
+                          Expanded(
+                            child: _buildGridTextBox(
+                              'Kecerdasan Buatan\n(AI)',
+                              _c1Controllers['ai']!,
+                              darkFieldColor,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 14),
                       Row(
                         children: [
-                          Expanded(child: _buildGridTextBox('Sistem Pendukung\nKeputusan', _c1Controllers['spk']!, darkFieldColor)),
+                          Expanded(
+                            child: _buildGridTextBox(
+                              'Sistem Pendukung\nKeputusan',
+                              _c1Controllers['spk']!,
+                              darkFieldColor,
+                            ),
+                          ),
                           const SizedBox(width: 14),
-                          Expanded(child: _buildGridTextBox('Statistika\nKomputer', _c1Controllers['stats']!, darkFieldColor)),
+                          Expanded(
+                            child: _buildGridTextBox(
+                              'Statistika\nKomputer',
+                              _c1Controllers['stats']!,
+                              darkFieldColor,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 14),
-                      _buildGridTextBox('Mobile Programming', _c1Controllers['mobile']!, darkFieldColor, isFullWidth: true),
+                      _buildGridTextBox(
+                        'Mobile Programming',
+                        _c1Controllers['mobile']!,
+                        darkFieldColor,
+                        isFullWidth: true,
+                      ),
                     ],
                   ),
                 ),
@@ -292,14 +384,24 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           decoration: const BoxDecoration(
                             color: Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.only(topLeft: Radius.circular(11), topRight: Radius.circular(11)),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(11),
+                              topRight: Radius.circular(11),
+                            ),
                           ),
                           child: Text(
                             topik['name']!,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
                         Padding(
@@ -307,57 +409,84 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildSubLabelKriteria('MINAT MAHASISWA (C2)', tealTextColor),
+                              _buildSubLabelKriteria(
+                                'MINAT MAHASISWA (C2)',
+                                tealTextColor,
+                              ),
                               const SizedBox(height: 10),
                               _buildSkalaLikertRow(
                                 labelKiri: 'Sangat\nTidak\nMinat',
                                 labelKanan: 'Sangat\nMinat',
                                 currentVal: _kuesionerValues['${id}_C2'] as int,
-                                onSelected: (v) => setState(() => _kuesionerValues['${id}_C2'] = v),
+                                onSelected: (v) => setState(
+                                  () => _kuesionerValues['${id}_C2'] = v,
+                                ),
                                 activeColor: primaryColor,
                               ),
                               const SizedBox(height: 20),
 
-                              _buildSubLabelKriteria('PENGALAMAN PROYEK (C3)', tealTextColor),
+                              _buildSubLabelKriteria(
+                                'PENGALAMAN PROYEK (C3)',
+                                tealTextColor,
+                              ),
                               const SizedBox(height: 10),
                               _buildPengalamanTingkatRow(
                                 currentVal: _kuesionerValues['${id}_C3'] as int,
-                                onSelected: (v) => setState(() => _kuesionerValues['${id}_C3'] = v),
+                                onSelected: (v) => setState(
+                                  () => _kuesionerValues['${id}_C3'] = v,
+                                ),
                                 activeColor: primaryColor,
                               ),
                               const SizedBox(height: 20),
 
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  _buildSubLabelKriteria('PENGUASAAN TEKNOLOGI (C4)', tealTextColor),
+                                  _buildSubLabelKriteria(
+                                    'PENGUASAAN TEKNOLOGI (C4)',
+                                    tealTextColor,
+                                  ),
                                   Text(
                                     '${(_kuesionerValues['${id}_C4'] as double).toInt()}/5',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: tealTextColor, fontSize: 13),
-                                  )
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: tealTextColor,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                 ],
                               ),
                               Slider(
                                 value: _kuesionerValues['${id}_C4'] as double,
-                                min: 1, max: 5, divisions: 4,
+                                min: 1,
+                                max: 5,
+                                divisions: 4,
                                 activeColor: primaryColor,
                                 inactiveColor: const Color(0xFFE2E8F0),
-                                onChanged: (v) => setState(() => _kuesionerValues['${id}_C4'] = v),
+                                onChanged: (v) => setState(
+                                  () => _kuesionerValues['${id}_C4'] = v,
+                                ),
                               ),
                               const SizedBox(height: 12),
 
-                              _buildSubLabelKriteria('KETERSEDIAAN DATASET/OBJEK (C9)', tealTextColor),
+                              _buildSubLabelKriteria(
+                                'KETERSEDIAAN DATASET/OBJEK (C9)',
+                                tealTextColor,
+                              ),
                               const SizedBox(height: 10),
                               _buildSkalaLikertRow(
                                 labelKiri: 'Sangat\nSulit',
                                 labelKanan: 'Sangat\nMudah',
                                 currentVal: _kuesionerValues['${id}_C9'] as int,
-                                onSelected: (v) => setState(() => _kuesionerValues['${id}_C9'] = v),
+                                onSelected: (v) => setState(
+                                  () => _kuesionerValues['${id}_C9'] = v,
+                                ),
                                 activeColor: primaryColor,
                               ),
                             ],
                           ),
-                        )
+                        ),
                       ],
                     ),
                   );
@@ -371,12 +500,27 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     elevation: 0,
                   ),
                   child: _isSending
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Hitung Rekomendasi Topik', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Hitung Rekomendasi Topik',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -389,34 +533,71 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
   Widget _buildSubLabelKriteria(String title, Color textColor) {
     return Text(
       title,
-      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textColor, fontFamily: 'monospace', letterSpacing: 0.5),
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
+        color: textColor,
+        fontFamily: 'monospace',
+        letterSpacing: 0.5,
+      ),
     );
   }
 
   // WIDGET INPUT BOX AMAN DARI EROR LOCALIZATION DECIMAL KEYBOARD HP
-  Widget _buildGridTextBox(String title, TextEditingController ctrl, Color bgFieldColor, {bool isFullWidth = false}) {
+  Widget _buildGridTextBox(
+    String title,
+    TextEditingController ctrl,
+    Color bgFieldColor, {
+    bool isFullWidth = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title, 
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.black54, height: 1.2, fontFamily: 'monospace')
+          title,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+            height: 1.2,
+            fontFamily: 'monospace',
+          ),
         ),
         const SizedBox(height: 6),
         TextFormField(
           controller: ctrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'monospace'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontFamily: 'monospace',
+          ),
           decoration: InputDecoration(
             hintText: '00',
-            hintStyle: TextStyle(color: Colors.grey[500], fontSize: 13, fontFamily: 'monospace'),
+            hintStyle: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 13,
+              fontFamily: 'monospace',
+            ),
             filled: true,
             fillColor: bgFieldColor,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 10),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
-            focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
-            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: Colors.redAccent, width: 1)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(6),
+              borderSide: BorderSide.none,
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+            ),
           ),
           validator: (v) {
             if (v == null || v.trim().isEmpty) return 'Wajib diisi';
@@ -440,7 +621,16 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
   }) {
     return Row(
       children: [
-        Text(labelKiri, textAlign: TextAlign.center, style: const TextStyle(fontSize: 9, color: Colors.black38, fontWeight: FontWeight.bold, height: 1.1)),
+        Text(
+          labelKiri,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 9,
+            color: Colors.black38,
+            fontWeight: FontWeight.bold,
+            height: 1.1,
+          ),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Container(
@@ -467,7 +657,11 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
                     ),
                     child: Text(
                       '$val',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black87),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.black87,
+                      ),
                     ),
                   ),
                 );
@@ -476,7 +670,16 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
           ),
         ),
         const SizedBox(width: 8),
-        Text(labelKanan, textAlign: TextAlign.center, style: const TextStyle(fontSize: 9, color: Colors.black38, fontWeight: FontWeight.bold, height: 1.1)),
+        Text(
+          labelKanan,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 9,
+            color: Colors.black38,
+            fontWeight: FontWeight.bold,
+            height: 1.1,
+          ),
+        ),
       ],
     );
   }
@@ -486,7 +689,13 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
     required Function(int) onSelected,
     required Color activeColor,
   }) {
-    final List<String> labels = ['Tidak\nPernah', 'Jarang', 'Pernah', 'Sering', 'Sangat\nBerpengalaman'];
+    final List<String> labels = [
+      'Tidak\nPernah',
+      'Jarang',
+      'Pernah',
+      'Sering',
+      'Sangat\nBerpengalaman',
+    ];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (idx) {
@@ -505,14 +714,16 @@ class _FormPenilaianPageState extends State<FormPenilaianPage> {
               decoration: BoxDecoration(
                 color: isSelected ? activeColor : Colors.white,
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: isSelected ? activeColor : const Color(0xFFCBD5E1)),
+                border: Border.all(
+                  color: isSelected ? activeColor : const Color(0xFFCBD5E1),
+                ),
               ),
               child: Text(
                 labels[idx],
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 8, 
-                  fontWeight: FontWeight.bold, 
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
                   color: isSelected ? Colors.white : Colors.black54,
                   height: 1.1,
                 ),

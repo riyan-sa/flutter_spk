@@ -11,8 +11,11 @@ class RiwayatModel {
 
   factory RiwayatModel.fromJson(Map<String, dynamic> json) {
     return RiwayatModel(
-      namaAlternatif: json['alternative']?['nama_alternatif'] ?? 'Topik Tidak Diketahui',
-      nilaiAkhir: json['nilai_akhir'] != null ? double.parse(json['nilai_akhir'].toString()) : 0.0,
+      namaAlternatif:
+          json['top_alternative']?['nama_topik'] ?? 'Topik Tidak Diketahui',
+      nilaiAkhir: json['top_score'] != null
+          ? double.parse(json['top_score'].toString())
+          : 0.0,
       tanggal: json['created_at'] ?? '',
     );
   }
