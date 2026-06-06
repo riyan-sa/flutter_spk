@@ -40,7 +40,9 @@ class _ProfilepageState extends State<Profilepage> {
         }
       }
     } on DioException catch (error) {
-      debugPrint('Gagal mengambil profile: ${error.response?.data ?? error.message}');
+      debugPrint(
+        'Gagal mengambil profile: ${error.response?.data ?? error.message}',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -68,7 +70,9 @@ class _ProfilepageState extends State<Profilepage> {
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('Logout', style: TextStyle(color: Colors.white)),
           ),
@@ -120,9 +124,16 @@ class _ProfilepageState extends State<Profilepage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+                size: 48,
+              ),
               const SizedBox(height: 16),
-              const Text("Gagal memuat profile", style: TextStyle(color: Colors.red, fontSize: 16)),
+              const Text(
+                "Gagal memuat profile",
+                style: TextStyle(color: Colors.red, fontSize: 16),
+              ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () {
@@ -131,8 +142,10 @@ class _ProfilepageState extends State<Profilepage> {
                 },
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Coba Lagi'),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0D5C4D)),
-              )
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D5C4D),
+                ),
+              ),
             ],
           ),
         ),
@@ -150,7 +163,10 @@ class _ProfilepageState extends State<Profilepage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text("Profile", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Profile",
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
@@ -196,7 +212,9 @@ class _ProfilepageState extends State<Profilepage> {
                       Container(
                         height: 256,
                         decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(36),
+                          ),
                           gradient: LinearGradient(
                             colors: [
                               Colors.teal[700]!,
@@ -263,7 +281,10 @@ class _ProfilepageState extends State<Profilepage> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.teal[100],
                               borderRadius: BorderRadius.circular(30),
@@ -292,21 +313,45 @@ class _ProfilepageState extends State<Profilepage> {
 
                       // CARDS GRID
                       GridView.count(
-                        crossAxisCount: MediaQuery.of(context).size.width > 768 ? 2 : 1,
+                        crossAxisCount: MediaQuery.of(context).size.width > 768
+                            ? 2
+                            : 1,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisSpacing: 24,
-                        mainAxisSpacing: 24,
-                        childAspectRatio: 3,
+                        mainAxisSpacing: 16, // Jarak antar kartu disesuaikan
+                        childAspectRatio:
+                            MediaQuery.of(context).size.width > 768
+                            ? 3
+                            : 2.2, // Rasio diubah agar lebih fleksibel di HP
                         children: [
                           InfoCard(title: "Nama Lengkap", value: name),
-                          InfoCard(title: "Email", value: profile?['email'] ?? "-"),
-                          InfoCard(title: "NIM", value: studentProfile['nim']?.toString() ?? "-"),
-                          InfoCard(title: "Semester", value: studentProfile['semester']?.toString() ?? "-"),
-                          InfoCard(title: "IPK", value: studentProfile['ipk']?.toString() ?? "-"),
-                          InfoCard(title: "Minat", value: studentProfile['minat'] ?? "-"),
+                          InfoCard(
+                            title: "Email",
+                            value: profile?['email'] ?? "-",
+                          ),
+                          InfoCard(
+                            title: "NIM",
+                            value: studentProfile['nim']?.toString() ?? "-",
+                          ),
+                          InfoCard(
+                            title: "Semester",
+                            value:
+                                studentProfile['semester']?.toString() ?? "-",
+                          ),
+                          InfoCard(
+                            title: "IPK",
+                            value: studentProfile['ipk']?.toString() ?? "-",
+                          ),
+                          InfoCard(
+                            title: "Minat",
+                            value: studentProfile['minat'] ?? "-",
+                          ),
                           const InfoCard(title: "Role", value: "Mahasiswa"),
-                          InfoCard(title: "ID Pengguna", value: "#${profile?['id'] ?? "-"}"),
+                          InfoCard(
+                            title: "ID Pengguna",
+                            value: "#${profile?['id'] ?? "-"}",
+                          ),
                         ],
                       ),
                     ],
@@ -333,7 +378,8 @@ class InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      // Padding disesuaikan jadi lebih lega buat ukuran teks
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(28),
@@ -345,10 +391,7 @@ class InfoCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF64748B),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 8),
           Text(
