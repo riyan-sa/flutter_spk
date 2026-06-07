@@ -16,7 +16,8 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        // PERBAIKAN 1: Langsung tembak "17"
+        jvmTarget = "17" 
     }
 
     defaultConfig {
@@ -24,7 +25,10 @@ android {
         applicationId = "com.example.flutter_application_sistem_dss"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        
+        // PERBAIKAN 2: Tambah tanda "=" di minSdk
+        minSdk = flutter.minSdkVersion 
+        
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

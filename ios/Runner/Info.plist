@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+    <string>Aplikasi membutuhkan akses kamera untuk memindai KTM Anda.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Aplikasi membutuhkan akses galeri untuk mengambil foto KTM Anda.</string>
 </dict>
 </plist>
