@@ -11,7 +11,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(); // Menggunakan email controller
+  final _emailController = TextEditingController(); 
   final _passwordController = TextEditingController();
   bool _isPasswordObscured = true;
   bool _isLoading = false;
@@ -20,7 +20,6 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
-      // Mengirimkan email murni hasil inputan user ke API Laravel
       bool success = await Provider.of<AuthProvider>(context, listen: false).login(
         _emailController.text.trim(),
         _passwordController.text,
@@ -29,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = false);
 
       if (success && mounted) {
+        // Menyelaraskan rute perpindahan halaman utama setelah login sukses
         Navigator.pushReplacementNamed(context, '/dashboard');
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -41,6 +41,24 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // LOGIKA BARU: Handle jembatan autentikasi Google Sign-In tambahan
+  void _handleGoogleLogin() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    bool success = await authProvider.loginWithGoogle();
+    
+    if (success && mounted) {
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal masuk menggunakan akun Google!'), 
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -50,11 +68,16 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF0D5C4D); // Hijau Tua SKRIPSIAN
-    const tealColor = Color(0xFF14B8A6);    // Hijau Teal Akseror / Link
-    const darkFieldColor = Color(0xFF1E293B); // Input Box Gelap (Slate)
-    const grayBgColor = Color(0xFFF3F4F6);    // Latar Belakang Atas
+    final authProvider = Provider.of<AuthProvider>(context);
     
+    const primaryColor = Color(0xFF0D5C4D); 
+    const tealColor = Color(0xFF14B8A6);    
+    const darkFieldColor = Color(0xFF1E293B); 
+    const grayBgColor = Color(0xFFF3F4F6);    
+    
+    // Menentukan state loading gabungan antara login lama dan login google
+    bool systemIsLoading = _isLoading || authProvider.isLoading;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -63,7 +86,7 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ==========================================
-              // SECTION 1: HEADER & BANNER INFO (Latar Abu-abu Ringan)
+              // SECTION 1: HEADER & BANNER INFO
               // ==========================================
               Container(
                 color: grayBgColor,
@@ -120,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               // ==========================================
-              // SECTION 2: FORM LOGIN (Latar Putih Bersih)
+              // SECTION 2: FORM LOGIN + GOOGLE ADD-ON
               // ==========================================
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
@@ -139,7 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 32),
                       
-                      // FIELD 1: EMAIL INPUT (Label Username / NIM agar sinkron ke Figma)
+                      // FIELD 1: EMAIL INPUT
                       const Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -150,10 +173,10 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _emailController,
-                        keyboardType: TextInputType.emailAddress, // Mengoptimalkan keyboard untuk email
+                        keyboardType: TextInputType.emailAddress, 
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'Masukkan Email Anda', // Petunjuk pengisian email
+                          hintText: 'Masukkan Email Anda', 
                           hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                           filled: true,
                           fillColor: darkFieldColor,
@@ -173,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 20),
                       
-                      // FIELD 2: PASSWORD + LUPA PASSWORD
+                      // FIELD 2: PASSWORD INPUT
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -215,11 +238,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 28),
                       
-                      // TOMBOL LOGIN
+                      // TOMBOL UTAMA LAMA: EMAIL & PASSWORD LOGIN
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
+                          onPressed: systemIsLoading ? null : _handleLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
                             foregroundColor: Colors.white,
@@ -227,7 +250,7 @@ class _LoginPageState extends State<LoginPage> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             elevation: 0,
                           ),
-                          child: _isLoading 
+                          child: systemIsLoading && _isLoading
                             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -239,9 +262,65 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                         ),
                       ),
+                      const SizedBox(height: 24),
+
+                      // GARIS PEMBATAS VISUAL (OR SEPARATOR)
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              "atau masuk dengan",
+                              style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // OPSI FITUR TAMBAHAN: TOMBOL GOOGLE AUTHENTICATION
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 52), 
+                          side: BorderSide(color: Colors.grey[300]!, width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: systemIsLoading ? null : _handleGoogleLogin,
+                        child: systemIsLoading && authProvider.isLoading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: primaryColor, strokeWidth: 2))
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Menggunakan Ikon G bawaan Flutter yang dibungkus lingkaran merah
+                                Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.redAccent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(2),
+                                  child: const Icon(
+                                    Icons.g_mobiledata_rounded, 
+                                    color: Colors.white, 
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  "Google Account",
+                                  style: TextStyle(
+                                    color: Color(0xFF1E293B),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                      ),
                       const SizedBox(height: 28),
                       
-                      // TEKS REGISTER USER
+                      // TEKS LINK REGISTER USER
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -266,7 +345,7 @@ class _LoginPageState extends State<LoginPage> {
                       const Divider(color: Colors.black12, thickness: 1),
                       const SizedBox(height: 16),
                       Text(
-                        '© 2024 SKRIPSIAN Enterprise. All rights reserved.',
+                        '© 2026 SKRIPSIAN Enterprise. All rights reserved.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
